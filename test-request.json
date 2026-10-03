@@ -1,0 +1,7 @@
+{
+  "model": "qwen3.8-27b",
+  "messages": [{"role": "user", "content": "Responde en español: ¿cuánto es 17 por 23?"}],
+  "max_tokens": 128,
+  "temperature": 0,
+  "chat_template_kwargs": {"enable_thinking": false}
+}

@@ -1,0 +1,47 @@
+# Modelos y cache de Hugging Face (decenas de GB)
+models/*
+!models/.gitkeep
+
+# Binarios, fuentes descargadas y artefactos de compilacion
+runtime/
+downloads/
+build/
+cmake-build-*/
+CMakeCache.txt
+CMakeFiles/
+
+# Entornos y caches de Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Estado local y registros de ejecucion
+logs/
+selected-model.txt
+*.pid
+*.lock
+*.log
+
+# Configuracion local y secretos
+.env
+.env.*
+!.env.example
+
+# Acceso de escritorio generado para una ruta concreta
+IA-Local.desktop
+
+# Metadatos de herramientas locales
+.agents/
+.aws/
+.codex/
+.vscode/
+.idea/
+
+# Archivos del sistema operativo y editores
+.DS_Store
+Thumbs.db
+*~
+*.swp
+*.swo

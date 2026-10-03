@@ -1,0 +1,169 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+URL=http://127.0.0.1:8080
+PID_FILE="$ROOT/logs/server-linux.pid"
+
+server_bin() {
+    if [[ -x "$ROOT/runtime/llama-b11351-linux/llama-server" ]]; then
+        printf '%s\n' "$ROOT/runtime/llama-b11351-linux/llama-server"
+    elif command -v llama-server >/dev/null 2>&1; then
+        command -v llama-server
+    else
+        printf '%s\n' "$ROOT/runtime/llama-b11351-linux/llama-server"
+    fi
+}
+
+server_pid() {
+    [[ -r "$PID_FILE" ]] || return 1
+    local pid expected actual
+    read -r pid < "$PID_FILE"
+    [[ "$pid" =~ ^[0-9]+$ ]] || return 1
+    kill -0 "$pid" 2>/dev/null || return 1
+    expected=$(readlink -f -- "$(server_bin)" 2>/dev/null) || return 1
+    actual=$(readlink -f -- "/proc/$pid/exe" 2>/dev/null) || return 1
+    [[ "$actual" == "$expected" ]] || return 1
+    printf '%s\n' "$pid"
+}
+
+ready() {
+    curl --silent --fail --max-time 2 "$URL/health" 2>/dev/null |
+        grep -Eq '"status"[[:space:]]*:[[:space:]]*"ok"'
+}
+
+state() {
+    if ! server_pid >/dev/null; then
+        printf 'APAGADA'
+    elif ready; then
+        printf 'ENCENDIDA - lista para conversar'
+    else
+        printf 'ARRANCANDO o no responde todavia'
+    fi
+}
+
+selected_model() {
+    local name default='Qwen3.8-27B-UD-Q3_K_XL.gguf'
+    if [[ -r "$ROOT/selected-model.txt" ]]; then
+        IFS= read -r name < "$ROOT/selected-model.txt" || true
+        name=${name//$'\r'/}
+        name=${name#$'\xef\xbb\xbf'}
+    fi
+    name=${name:-$default}
+    if [[ "$name" == */* || "$name" != *.gguf ]]; then
+        return 1
+    fi
+    printf '%s\n' "$name"
+}
+
+pause_menu() {
+    printf '\n    Pulsa ENTER para volver al menu'
+    read -r _
+}
+
+start_server() {
+    if server_pid >/dev/null; then
+        echo 'La IA ya esta encendida o arrancando. No se abrira otra copia.'
+        return
+    fi
+    if ! [[ -x "$(server_bin)" ]]; then
+        echo 'Falta llama-server para Linux. Ejecuta primero: ./install-linux.sh'
+        return 1
+    fi
+    if ss -H -ltn 'sport = :8080' 2>/dev/null | grep -q .; then
+        echo 'El puerto 8080 lo ocupa otro programa. No se ha detenido ese programa.'
+        return 1
+    fi
+
+    mkdir -p "$ROOT/logs"
+    local stamp log pid deadline
+    stamp=$(date +%Y%m%d-%H%M%S)
+    log="$ROOT/logs/menu-linux-$stamp.log"
+    nohup setsid "$ROOT/start-llm.sh" >"$log" 2>&1 </dev/null &
+    pid=$!
+    printf '%s\n' "$pid" > "$PID_FILE"
+    echo 'Cargando el cerebro de la IA. Puede tardar un poco...'
+    deadline=$((SECONDS + 120))
+    while (( SECONDS < deadline )); do
+        if ready; then
+            echo 'IA ENCENDIDA. Abriendo el chat...'
+            xdg-open "$URL" >/dev/null 2>&1 &
+            return
+        fi
+        if ! kill -0 "$pid" 2>/dev/null; then
+            echo "El arranque fallo. Ultimas lineas de $log:"
+            tail -n 15 "$log"
+            rm -f -- "$PID_FILE"
+            return 1
+        fi
+        sleep 1
+    done
+    echo "Sigue cargando. Registro: $log"
+}
+
+choose_model() {
+    local -a models=()
+    local file answer i size current
+    while IFS= read -r -d '' file; do models+=("$file"); done < <(
+        find "$ROOT/models" -maxdepth 1 -type f -name '*.gguf' ! -name 'mmproj*' -print0 | sort -z
+    )
+    if (( ${#models[@]} == 0 )); then echo 'No hay modelos GGUF descargados.'; return; fi
+    echo; echo '    MODELOS DISPONIBLES'
+    for i in "${!models[@]}"; do
+        size=$(numfmt --to=iec-i --suffix=B "$(stat -c %s "${models[$i]}")")
+        printf '    [%d] %s (%s)\n' "$((i + 1))" "$(basename "${models[$i]}")" "$size"
+    done
+    echo '    [0] Cancelar'
+    read -r -p '    Elige un modelo: ' answer
+    [[ "$answer" == 0 ]] && return
+    if ! [[ "$answer" =~ ^[0-9]+$ ]] || (( answer < 1 || answer > ${#models[@]} )); then
+        echo 'Numero no valido. La seleccion anterior se mantiene.'; return
+    fi
+    current=$(basename "${models[$((answer - 1))]}")
+    printf '%s\n' "$current" > "$ROOT/selected-model.txt"
+    echo "Seleccion guardada: $current"
+    if server_pid >/dev/null; then
+        echo 'La IA actual sigue funcionando. Usa 3 para apagarla y luego 1 para cargar el elegido.'
+    else
+        echo 'Usa 1 para encender la IA con este modelo.'
+    fi
+}
+
+if [[ ${1:-} == '--status' ]]; then state; echo; exit 0; fi
+
+while true; do
+    clear
+    echo
+    echo '  +====================================================+'
+    echo '  |           I A   L O C A L   -   Q W E N            |'
+    echo '  |                CENTRO DE MANDO                     |'
+    echo '  +====================================================+'
+    echo
+    printf '    ESTADO: %s\n' "$(state)"
+    if current=$(selected_model); then printf '    PROXIMO ARRANQUE: %s\n' "$current"; fi
+    if server_pid >/dev/null && ready; then
+        in_use=$(curl --silent --max-time 2 "$URL/props" 2>/dev/null |
+            sed -n 's/.*"model_path"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+        [[ -n "$in_use" ]] && printf '    EN USO: %s\n' "$(basename "$in_use")"
+    fi
+    echo
+    echo '    [1] ENCENDER la IA y abrir el chat'
+    echo '    [2] ABRIR el chat en el navegador'
+    echo '    [3] APAGAR la IA y liberar memoria'
+    echo '    [4] ACTUALIZAR el estado'
+    echo '    [5] ABRIR la carpeta de archivos'
+    echo '    [6] ELEGIR MODELO para el proximo arranque'
+    echo '    [0] SALIR del menu (la IA sigue como este)'
+    echo
+    read -r -p '    Elige un numero y pulsa ENTER: ' option
+    case "$option" in
+        1) start_server; pause_menu ;;
+        2) if ready; then xdg-open "$URL" >/dev/null 2>&1 & else echo 'La IA no esta lista. Usa 1 para encenderla.'; fi; pause_menu ;;
+        3) "$ROOT/stop-llm.sh"; pause_menu ;;
+        4) continue ;;
+        5) xdg-open "$ROOT" >/dev/null 2>&1 & ;;
+        6) choose_model; pause_menu ;;
+        0) exit 0 ;;
+        *) echo 'Elige una de las opciones del menu.'; pause_menu ;;
+    esac
+done
