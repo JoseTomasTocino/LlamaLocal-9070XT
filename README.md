@@ -24,9 +24,9 @@ mismo equipo.
 ## Estado del proyecto
 
 La instalacion de Ubuntu parte de un sistema que ya dispone de un controlador
-AMD y un SDK ROCm funcional. La guia reproducible para preparar Ubuntu desde
-cero hasta ese estado se documentara en un paso posterior; no forma parte aun
-de este repositorio.
+AMD y un SDK ROCm funcional. Consulta la guia reproducible para
+[preparar Ubuntu 26.04 y ROCm 10](docs/ubuntu-rocm.md) antes de ejecutar el
+instalador de llama.cpp.
 
 La configuracion se ha desarrollado para `gfx1201`. Otras GPU AMD pueden
 requerir cambiar `AMDGPU_TARGETS` en `install-linux.sh` y reajustar memoria,
@@ -57,10 +57,10 @@ usuario debe aportarlos localmente.
 - `curl`, `ss`, `flock`, `setsid` y `xdg-open` para el menu.
 - Al menos un modelo GGUF dentro de `models/`.
 
-Para la configuracion original con ROCm 7.14, el instalador comprueba la
+Para la configuracion comprobada con ROCm 10, el instalador comprueba la
 presencia de `hip-lang-config.cmake` y, si falta, indica el paquete de
-desarrollo esperado. Esto no sustituye la futura guia de instalacion completa
-de ROCm.
+desarrollo esperado. Los pasos completos están en
+[`docs/ubuntu-rocm.md`](docs/ubuntu-rocm.md).
 
 ### Compilar llama.cpp
 

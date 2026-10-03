@@ -15,7 +15,7 @@ Faltan las cabeceras y los archivos CMake de desarrollo de ROCm.
 La instalacion actual contiene el runtime, pero no el SDK necesario para compilar.
 
 Instalalos una sola vez con:
-  sudo apt install amdrocm-core-dev7.14-gfx1201
+  sudo apt install amdrocm-core-dev10.0-gfx1201
 
 Despues vuelve a ejecutar ./install-linux.sh. Los modelos no se descargaran.
 EOF
