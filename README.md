@@ -133,9 +133,14 @@ original para Windows 11. Necesitan un paquete binario de llama.cpp con HIP y
 sus bibliotecas ROCm dentro de `runtime/llama-b11351`, contenido que no se
 incluye en Git.
 
-La preparacion reproducible de ese runtime tampoco se documenta todavía. Los
-scripts se mantienen principalmente para conservar las decisiones de diseño y
-permitir comparar ambos entornos.
+La [guia de Windows](docs/windows.md) conserva las versiones, checksums,
+instrucciones de uso y configuracion de la instalacion original. Los
+[resultados de Windows](docs/resultados-windows.md) documentan las pruebas de
+rendimiento y memoria. Todavia no hay un instalador automatizado para Windows.
+
+Ambos lanzadores incluyen actualmente `--agent`: habilitan herramientas de
+archivos y terminal con los permisos del proceso. No hay aislamiento automatico
+de carpetas ni un buscador web configurado por ese parametro.
 
 ## Configuracion predeterminada
 
