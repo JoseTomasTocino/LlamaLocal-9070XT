@@ -2,12 +2,13 @@ param([switch]$StatusOnly)
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 . "$root\Model-Selection.ps1"
-$exe = Join-Path $root 'runtime\llama-b11351\llama-server.exe'
+$exe = Join-Path $root 'runtime\llama-b12110-rocm101\llama-server.exe'
 $url = 'http://127.0.0.1:8080'
 $shell = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
 
 function Get-LocalServer {
-    @(Get-Process llama-server -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $exe })
+    $known = @($exe, (Join-Path $root 'runtime\llama-b11351\llama-server.exe'), (Join-Path $root 'runtime\llama-b12110\llama-server.exe'))
+    @(Get-Process llama-server -ErrorAction SilentlyContinue | Where-Object { $_.Path -in $known })
 }
 
 function Test-Ready {

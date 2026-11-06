@@ -1,5 +1,18 @@
 # Windows: instalacion local y uso
 
+**Actualizacion del 6 de noviembre:** el perfil predeterminado ahora es
+llama.cpp b12110 con bibliotecas ROCm 10.1 en `.venv-rocm101` y ejecutable
+en `runtime/llama-b12110-rocm101`. El menu BAT utiliza este perfil.
+Las referencias a b11351/ROCm 10.0 de esta guia describen la instalacion
+original conservada. Para volver a ella: detener desde el menu y ejecutar
+`Start-LLM.ps1 -RuntimeVersion b11351 -RocmVersion 10.0`.
+El menu y la parada reconocen tanto el perfil nuevo como los anteriores.
+
+Revision de versiones y prueba comparativa de noviembre:
+[b11351 frente a b12110](revision-windows-2026-11.md).
+La instalacion original b11351 se conserva como alternativa. El perfil activo
+y los comandos de vuelta atras se indican al principio de esta guia.
+
 ## Selector de modelos (menu BAT)
 
 La opcion **6** de `IA-Local.bat` lista los archivos `.gguf` de `models`, muestra su tamano y guarda el elegido en `selected-model.txt`. `Model-Selection.ps1` es el ayudante compartido por el menu y el arranque; conservarlo junto a los otros scripts. La pantalla distingue el modelo seleccionado para el proximo arranque del modelo actualmente en uso.

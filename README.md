@@ -1,5 +1,10 @@
 # LlamaLocal-9070XT
 
+Windows, revision del 6 de noviembre de 2026: el menu usa llama.cpp b12110
+con bibliotecas ROCm 10.1, probadas en este equipo. Linux conserva su version
+fijada b11351. Detalles, resultados y vuelta atras en
+[la revision de Windows](docs/revision-windows-2026-11.md).
+
 Scripts para ejecutar modelos GGUF localmente mediante
 [llama.cpp](https://github.com/ggml-org/llama.cpp), con un menu sencillo para
 arrancar el servidor, abrir el chat, detenerlo y cambiar de modelo.
